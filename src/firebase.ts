@@ -3,7 +3,7 @@ import { initializeApp } from "firebase/app";
 import { getStorage } from "firebase/storage"
 const firebaseConfig = {
     apiKey: process.env.API_KEY,
-    authDomain: '<your-auth-domain>',
+    authDomain: process.env.AUTH_DOMAIN,
     databaseURL: process.env.DB_URL,
     storageBucket: process.env.STORAGE_BUCKET_URL
 };
