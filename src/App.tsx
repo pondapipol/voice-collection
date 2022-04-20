@@ -19,7 +19,7 @@ const speechRecognition =
     // @ts-ignore
     webkitSpeechRecognition
 const mic = new speechRecognition()
-mic.continuous = true
+mic.continuous = false
 mic.interimResults = true
 mic.lang = 'th-TH'
 
