@@ -13,7 +13,11 @@ import axios from 'axios'
 // @ts-ignore
 const speechRecognition =
     // @ts-ignore
-    window.SpeechRecognition || window.webkitSpeechRecognition
+    window.SpeechRecognition ||
+    // @ts-ignore
+    window.webkitSpeechRecognition ||
+    // @ts-ignore
+    webkitSpeechRecognition
 const mic = new speechRecognition()
 mic.continuous = true
 mic.interimResults = true
