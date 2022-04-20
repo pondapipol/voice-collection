@@ -96,23 +96,33 @@ function App() {
         }
     }, [status])
 
+    // let timeout: any
+    const [timeout, setout] = useState<any>()
+
     useEffect(() => {
         handleListen()
     }, [islistening])
-    const handleListen = () => {
+    const handleListen = async () => {
         if (islistening) {
-            mic.start()
+            await mic.start()
             setstartcolor('red')
             startRecording()
-            setTimeout(() => {
-                setIslistening(!islistening)
-            }, 5000)
-            mic.onend = () => {
-                console.log('continue...')
-                mic.start()
-            }
+            // console.log('set time out')
+            setout(
+                setTimeout(() => {
+                    // console.log('time out execute')
+                    setIslistening(false)
+                }, 5000)
+            )
+            // mic.onend = () => {
+            //     console.log('continue...')
+            //     mic.start()
+            // }
         } else {
-            mic.stop()
+            await mic.stop()
+            setIslistening(false)
+            clearTimeout(timeout)
+            setout(null)
             setstartcolor('green')
             stopRecording()
             mic.onend = () => {
@@ -166,17 +176,6 @@ function App() {
             .then((res) => {
                 console.log(res)
             })
-        // await fetch('http://localhost:3000/api/voicedata', {
-        //     method: 'POST',
-        //     headers: {
-        //         'Content-Type': 'application/json',
-        //         'Keep-Alive': 'timeout=5',
-        //     },
-        //     body: JSON.stringify(data),
-        // }).then((res) => {
-        //     console.log(res.json())
-        // })
-        // console.log(res)
     }
 
     return (
