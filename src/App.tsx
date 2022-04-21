@@ -1,25 +1,28 @@
 import { useState, useEffect } from 'react'
 import './App.css'
-// import { Formik, Form, Field } from 'formik'
-// import Dictaphone from './components/Dictaphone'
-// import ThaiDictaphone from './components/DictaphoneThai'
-// import { useReactMediaRecorder } from 'react-media-recorder'
 import useMediaRecorder from '@wmik/use-media-recorder'
-import { getStorage, ref, uploadBytes } from 'firebase/storage'
+import { ref, uploadBytes } from 'firebase/storage'
 import storage from './firebase'
 import axios from 'axios'
+
+import AudioVisualiser from './components/AudioVisualizer'
+import { useMediaStream } from './components/contexts/MediaStreamContext'
+// import SpeechRecognition, {
+//     useSpeechRecognition,
+// } from 'react-speech-recognition'
 // import { stat } from 'fs'
 
 // @ts-ignore
 const speechRecognition =
     // @ts-ignore
-    window.SpeechRecognition ||
-    // @ts-ignore
     window.webkitSpeechRecognition ||
     // @ts-ignore
+    window.SpeechRecognition ||
+    // @ts-ignore
     webkitSpeechRecognition
+
 const mic = new speechRecognition()
-mic.continuous = false
+mic.continuous = true
 mic.interimResults = true
 mic.lang = 'th-TH'
 
@@ -53,8 +56,12 @@ function App() {
     const [sentiment, setSentiment] = useState<string>()
     const [statcolor, setstatcolor] = useState<string>()
     const [startstopcolor, setstartcolor] = useState<string>()
-    let bordercolor = `1px solid ${statcolor}`
+    // let bordercolor = `1px solid ${statcolor}`
     const storageRef = ref(storage, 'audio')
+
+    const { stream, start, stop } = useMediaStream()
+    const toggleMic = () => (stream ? stop() : start())
+    // const toggleMic = () => start()
 
     const uptoCloud = async (fileName: string) => {
         // file = mediaBlob
@@ -77,9 +84,10 @@ function App() {
         status,
         mediaBlob,
         stopRecording,
-        getMediaStream,
+        // getMediaStream,
         startRecording,
         clearMediaBlob,
+        liveStream,
     } = useMediaRecorder({
         recordScreen: false,
         blobOptions: { type: 'audio/mpeg' },
@@ -96,7 +104,27 @@ function App() {
         }
     }, [status])
 
-    // let timeout: any
+    mic.onstart = () => {
+        console.log('Mic on')
+    }
+    mic.onend = () => {
+        console.log('Stopped Mic')
+    }
+
+    mic.onresult = (event: any) => {
+        const transcript = Array.from(event.results)
+            // @ts-ignore
+            .map((result) => result[0])
+            .map((result) => result.transcript)
+            .join('')
+        // const transcript = event.results
+        setNote(transcript)
+        console.log(transcript)
+        mic.onerror = (event: any) => {
+            console.log(event.error)
+        }
+    }
+
     const [timeout, setout] = useState<any>()
 
     useEffect(() => {
@@ -104,13 +132,18 @@ function App() {
     }, [islistening])
     const handleListen = async () => {
         if (islistening) {
+            // SpeechRecognition.startListening({
+            //     continuous: true,
+            //     language: 'th-TH',
+            // })
             await mic.start()
-            setstartcolor('red')
             startRecording()
-            // console.log('set time out')
+            console.log(islistening)
+            setstartcolor('red')
+            console.log('set time out')
             setout(
                 setTimeout(() => {
-                    // console.log('time out execute')
+                    console.log('time out execute')
                     setIslistening(false)
                 }, 5000)
             )
@@ -119,33 +152,15 @@ function App() {
             //     mic.start()
             // }
         } else {
+            // SpeechRecognition.stopListening()
             await mic.stop()
-            setIslistening(false)
+            stop()
+            stopRecording()
+            console.log(islistening)
+            // setIslistening(false)
             clearTimeout(timeout)
             setout(null)
             setstartcolor('green')
-            stopRecording()
-            mic.onend = () => {
-                console.log('Stopped Mic')
-            }
-        }
-
-        mic.onstart = () => {
-            console.log('Mic on')
-        }
-
-        mic.onresult = (event: any) => {
-            const transcript = Array.from(event.results)
-                // @ts-ignore
-                .map((result) => result[0])
-                .map((result) => result.transcript)
-                .join('')
-            // const transcript = event.results
-            setNote(transcript)
-            console.log(transcript)
-            mic.onerror = (event: any) => {
-                console.log(event.error)
-            }
         }
     }
 
@@ -153,7 +168,6 @@ function App() {
         navigator.geolocation.getCurrentPosition((location) => {
             setLat(location.coords.latitude)
             setLong(location.coords.longitude)
-            // setTime(location.timestamp)
         })
     }, [])
 
@@ -204,20 +218,28 @@ function App() {
                     <div className="middle-wrapper">
                         {/* <h3>Current Note</h3> */}
                         <div className="transcript-box">
-                            <p>{note}</p>
+                            {/* {liveStream && (
+                                // <Visualizer audioStream={liveStream} />
+                                // @ts-ignore
+                                // <AudioAnalyser audio={liveStream} />
+                            )} */}
+                            {islistening ? <AudioVisualiser /> : null}
+                            {/* <div>
+                                <p>{note}</p>
+                            </div> */}
                         </div>
                         <button
                             className="startstop-but"
-                            onClick={() =>
+                            onClick={() => {
                                 setIslistening((prevState) => !prevState)
-                            }
+                                toggleMic()
+                            }}
                             style={{ backgroundColor: startstopcolor }}
                         >
                             {!islistening ? 'Start' : 'Stop'}
                         </button>
                     </div>
                 </div>
-                {/* <previewAudioStream /> */}
                 {/* <div>
                     <div>Longtitude: {longtidue}</div>
                     <div>Latitude: {latitude}</div>
