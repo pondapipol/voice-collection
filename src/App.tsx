@@ -52,8 +52,8 @@ function App() {
     const [longtidue, setLong] = useState<number>()
     // const [timestamp, setTime] = useState<number>()
     const [islistening, setIslistening] = useState(false)
-    const [note, setNote] = useState<string>()
-    const [sentiment, setSentiment] = useState<string>()
+    const [note, setNote] = useState<string>('')
+    const [sentiment, setSentiment] = useState<string>('')
     const [statcolor, setstatcolor] = useState<string>()
     const [startstopcolor, setstartcolor] = useState<string>()
     // let bordercolor = `1px solid ${statcolor}`
@@ -119,7 +119,7 @@ function App() {
             .join('')
         // const transcript = event.results
         setNote(transcript)
-        console.log(transcript)
+        // console.log(transcript)
         mic.onerror = (event: any) => {
             console.log(event.error)
         }
@@ -177,6 +177,7 @@ function App() {
 
     const handleRequest = async (data: any) => {
         const json = JSON.stringify(data)
+        console.log(json)
         await axios
             .post(
                 'https://senior-voice-server.vercel.app/api/voicedata',
@@ -295,9 +296,13 @@ function App() {
                         className="submit-but"
                         disabled={uploading}
                         onClick={async (e) => {
+                            if (!mediaBlob) {
+                                alert('input first')
+                                return
+                            }
                             setUploading(true)
+
                             const fileName = `audio-${Date.now()}.mpeg`
-                            await uptoCloud(fileName)
                             const data = {
                                 latitude: latitude,
                                 longitude: longtidue,
@@ -306,7 +311,9 @@ function App() {
                                 timestamp: Date.now(),
                                 sentiment: sentiment,
                             }
+                            console.log(data)
                             await handleRequest(data)
+                            await uptoCloud(fileName)
                             // console.log(await data)
                             clearMediaBlob()
                             setNote('')
